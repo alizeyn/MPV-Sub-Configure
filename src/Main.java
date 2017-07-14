@@ -10,9 +10,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.*;
 import javafx.scene.input.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -22,7 +20,7 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 
 import java.io.*;
-import java.util.Formatter;
+import java.util.Optional;
 
 
 public class Main extends Application {
@@ -61,6 +59,10 @@ public class Main extends Application {
     public static final String FLAG_SUB_FONT_BORDER_SIZE = "--sub-border-size=";
     public static final String FLAG_SUB_ALIGN = "--sub-align-y=";
 
+
+    public static final String CMD_MV_CONF_FILE = "mv ./mpv.conf /etc/mpv/mpv.conf";
+
+
     private String resultForFile = "";
     private String result = "";
 
@@ -75,10 +77,14 @@ public class Main extends Application {
     private String subtitlePath = "";
     private String subtitleName = "";
 
+    private StackPane stackPaneMainLayout;
 
     @Override
     public void start(Stage stage) {
+
+
         VBox mainLayout = new VBox();
+        stackPaneMainLayout = new StackPane(mainLayout);
 
         gridMenuLayout = getConfedGridpane();
         gridSubMenuLayout = getConfedGridpane();
@@ -95,7 +101,8 @@ public class Main extends Application {
         selectSubtitle();
 
         mainLayout.getChildren().addAll(dragDropPart(), gridMenuLayout, gridSubMenuLayout, saveConf(), gridPlayLayout, playMovie());
-        Scene scene = new Scene(mainLayout, ScreenUtil.getAppWidth(), ScreenUtil.getAppHeight());
+        Scene scene = new Scene(stackPaneMainLayout, ScreenUtil.getAppWidth(), ScreenUtil.getAppHeight());
+        stage.setResizable(false);
         stage.setScene(scene);
         stage.setTitle(WIN_TITLE);
         stage.show();
@@ -293,11 +300,11 @@ public class Main extends Application {
     private HBox saveConf() {
         HBox hbox = new HBox();
         hbox.setPadding(new Insets(10, 10, 10, 10));
-        JFXButton saveButton = new JFXButton("MAKE CONFIGURE PERMANENT");
+        JFXButton saveButton = new JFXButton("MAKE CONFIGURE File");
         saveButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
-                saveConfigure();
+                    saveConfigure();
             }
         });
         getConfedButton(saveButton);
@@ -318,7 +325,7 @@ public class Main extends Application {
 
         Label movieNameLabel = new Label();
         movieNameLabel.setText("Movie Name");
-        movieNameLabel.setMaxWidth(ScreenUtil.getAppWidth()/4);
+        movieNameLabel.setMaxWidth(ScreenUtil.getAppWidth() / 4);
         gridPlayLayout.add(movieNameLabel, 5, 1);
 
 
@@ -345,7 +352,7 @@ public class Main extends Application {
 
 
         Label subtitleNameLabel = new Label();
-        subtitleNameLabel.setMaxWidth(ScreenUtil.getAppWidth()/4);
+        subtitleNameLabel.setMaxWidth(ScreenUtil.getAppWidth() / 4);
         subtitleNameLabel.setText("Subtitle Name");
         gridPlayLayout.add(subtitleNameLabel, 5, 2);
 
@@ -461,15 +468,28 @@ public class Main extends Application {
         setArgs();
         Writer writer = null;
         try {
-            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("mpv.conf"), "utf-8"));
+            File confFile = new File("/tmp/mpv.conf");
+            if(!confFile.exists())
+                confFile.createNewFile();
+
+            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(confFile), "utf-8"));
             writer.write(resultForFile);
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setHeaderText("Configuration Created Successfully!");
+            alert.setContentText("configuration file is availabel at /tmp/mpv.conf\n"+
+                    "append this file to /etc/mpv/mpv.conf \nthen configuration works permanently.");
+            alert.show();
+
         } catch (IOException e) {
+            e.printStackTrace();
             System.out.println("can't create or write to file");
         } finally {
             try {
                 writer.close();
-                return true;
             } catch (IOException e) {
+                e.printStackTrace();
+            }
+            catch(NullPointerException e) {
                 e.printStackTrace();
             }
         }
@@ -484,6 +504,8 @@ public class Main extends Application {
         gridPlayLayout.setPadding(new Insets(0, 10, 0, 10));
         return gridPlayLayout;
     }
+
+
 
     private void selectMovieCallback() {
         FileChooser fc = new FileChooser();
@@ -509,10 +531,10 @@ public class Main extends Application {
         setArgs();
         System.out.println(result);
         String cmd;
-        if(subtitlePath.equals(""))
-            cmd =  "mpv "+ moviePath +" " + result;
+        if (subtitlePath.equals(""))
+            cmd = "mpv " + moviePath + " " + result;
         else
-            cmd = "mpv " +moviePath + " " + FLAG_SUB_FILE + subtitlePath + " " + result;
+            cmd = "mpv " + moviePath + " " + FLAG_SUB_FILE + subtitlePath + " " + result;
         System.out.println(cmd);
 
 
@@ -520,10 +542,26 @@ public class Main extends Application {
 
     }
 
+    private Optional<String> getRootPassDialog() {
+        PasswordDialog passPrompet = new PasswordDialog();
+        Optional<String> res = passPrompet.showAndWait();
+        return res;
+    }
 
     public boolean isNumeric(String str) {
         return str.matches("-?\\d+(\\.\\d+)?");  //match a number with optional '-' and decimal.
     }
+
+   private JFXDialogLayout getDialogLayout(String header, String content, String buttonText) {
+        JFXDialogLayout dialogLayout = new JFXDialogLayout();
+        dialogLayout.setHeading(new Text(header));
+        dialogLayout.setBody(new Text(content));
+        JFXButton acceptButton = new JFXButton(buttonText);
+
+       acceptButton.setStyle("-fx-background-color: #077a08; -fx-text-fill: white;");
+       dialogLayout.setActions(acceptButton);
+       return dialogLayout;
+   }
 
     private void setBottomBorder(Node node) {
         node.setStyle("-fx-border-color: #ccc; -fx-border-width: 0 0 1 0;");
