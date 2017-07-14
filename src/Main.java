@@ -532,9 +532,9 @@ public class Main extends Application {
         System.out.println(result);
         String cmd;
         if (subtitlePath.equals(""))
-            cmd = "mpv " + moviePath + " " + result;
+            cmd = "mpv " + "\"" + moviePath + "\"" + " " + result;
         else
-            cmd = "mpv " + moviePath + " " + FLAG_SUB_FILE + subtitlePath + " " + result;
+            cmd = "mpv " +"\"" + moviePath +"\"" + " " + FLAG_SUB_FILE + "\"" +subtitlePath + "\"" + " " + result;
         System.out.println(cmd);
 
 
