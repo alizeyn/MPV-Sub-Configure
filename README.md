@@ -1,4 +1,4 @@
-# UBTITLE CONFIGURATION CREATOR
+# SUBTITLE CONFIGURATION CREATOR
 a GUI  for mpv media player to make subtitle configuration.
 
 ![Alt text]( https://github.com/zeynaliAli/MPV-Sub-Configure/blob/master/scrshot.png)
